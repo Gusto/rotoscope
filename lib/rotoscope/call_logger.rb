@@ -89,7 +89,7 @@ class Rotoscope
 
     def log_call(call)
       caller_path = call.caller_path || ''
-      return if blacklist.match?(caller_path)
+      return unless blacklist.match?(caller_path)
       return if self == call.receiver
 
       caller_class_name = call.caller_class_name || '<UNKNOWN>'
