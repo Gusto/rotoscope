@@ -5,8 +5,8 @@ require 'csv'
 class Rotoscope
   class CallLogger
     class << self
-      def trace(dest, whitelist: [])
-        rs = new(dest, whitelist: whitelist)
+      def trace(dest, whitelist: [], blacklist: [])
+        rs = new(dest, whitelist: whitelist, blacklist: [])
         rs.trace { yield rs }
         rs
       ensure
@@ -16,13 +16,17 @@ class Rotoscope
 
     HEADER = "entity,caller_entity,filepath,lineno,method_name,method_level,caller_method_name,caller_method_level\n"
 
-    attr_reader :io, :whitelist
+    attr_reader :io, :whitelist, :blacklist
 
-    def initialize(output = nil, whitelist: nil)
+    def initialize(output = nil, whitelist: nil, blacklist: nil)
       unless whitelist.is_a?(Regexp)
         whitelist = Regexp.union(whitelist || [])
       end
+      unless blacklist.is_a?(Regexp)
+        blacklist = Regexp.union(blacklist || [])
+      end
       @whitelist = whitelist
+      @blacklist = blacklist
 
       if output.is_a?(String)
         @io = File.open(output, 'w')
@@ -94,6 +98,7 @@ class Rotoscope
 
       caller_class_name = call.caller_class_name || '<UNKNOWN>'
       return unless whitelist.match?(call.receiver_class_name) || whitelist.match?(caller_class_name)
+      return if blacklist.match?(caller_path)
 
       if call.caller_method_name.nil?
         caller_method_name = '<UNKNOWN>'
