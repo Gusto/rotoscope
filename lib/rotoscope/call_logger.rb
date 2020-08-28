@@ -5,8 +5,8 @@ require 'csv'
 class Rotoscope
   class CallLogger
     class << self
-      def trace(dest, whitelist: [], blacklist: [])
-        rs = new(dest, whitelist: whitelist, blacklist: [])
+      def trace(dest, class_whitelist: [], class_blacklist: [], path_blacklist: [])
+        rs = new(dest, class_whitelist: class_whitelist, class_blacklist: [], path_blacklist: [])
         rs.trace { yield rs }
         rs
       ensure
@@ -16,17 +16,23 @@ class Rotoscope
 
     HEADER = "entity,caller_entity,filepath,lineno,method_name,method_level,caller_method_name,caller_method_level\n"
 
-    attr_reader :io, :whitelist, :blacklist
+    attr_reader :io, :class_whitelist, :class_blacklist, :path_blacklist
 
-    def initialize(output = nil, whitelist: nil, blacklist: nil)
-      unless whitelist.is_a?(Regexp)
-        whitelist = Regexp.union(whitelist || [])
+    def initialize(output = nil, class_whitelist: nil, class_blacklist: nil, path_blacklist: nil)
+      unless class_whitelist.is_a?(Regexp)
+        class_whitelist = Regexp.union(class_whitelist || [])
       end
-      unless blacklist.is_a?(Regexp)
-        blacklist = Regexp.union(blacklist || [])
+      @class_whitelist = class_whitelist
+
+      unless class_blacklist.is_a?(Regexp)
+        class_blacklist = Regexp.union(class_blacklist || [])
       end
-      @whitelist = whitelist
-      @blacklist = blacklist
+      @class_blacklist = class_blacklist
+
+      unless path_blacklist.is_a?(Regexp)
+        path_blacklist = Regexp.union(path_blacklist || [])
+      end
+      @path_blacklist = path_blacklist
 
       if output.is_a?(String)
         @io = File.open(output, 'w')
@@ -93,12 +99,13 @@ class Rotoscope
 
     def log_call(call)
       caller_path = call.caller_path || ''
+      caller_class_name = call.caller_class_name || '<UNKNOWN>'
 
       return if self == call.receiver
-
-      caller_class_name = call.caller_class_name || '<UNKNOWN>'
-      return unless whitelist.match?(call.receiver_class_name) || whitelist.match?(caller_class_name)
-      return if blacklist.match?(caller_path)
+      return if caller_class_name == call.receiver_class_name
+      return if class_blacklist.match?(call.receiver_class_name) || class_blacklist.match?(caller_class_name)
+      return unless class_whitelist.match?(call.receiver_class_name) || class_whitelist.match?(caller_class_name)
+      return if path_blacklist.match?(caller_path)
 
       if call.caller_method_name.nil?
         caller_method_name = '<UNKNOWN>'
