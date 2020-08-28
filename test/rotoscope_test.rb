@@ -83,7 +83,7 @@ class RotoscopeTest < MiniTest::Test
   end
 
   def test_new
-    rs = Rotoscope::CallLogger.new(@logfile, blacklist: %w(tmp))
+    rs = Rotoscope::CallLogger.new(@logfile, whitelist: %w(tmp))
     assert(rs.is_a?(Rotoscope::CallLogger))
   end
 
@@ -226,8 +226,8 @@ class RotoscopeTest < MiniTest::Test
     ], parse_and_normalize(contents))
   end
 
-  def test_trace_ignores_calls_if_blacklisted
-    contents = rotoscope_trace(blacklist: [INNER_FIXTURE_PATH, OUTER_FIXTURE_PATH]) do
+  def test_trace_ignores_calls_if_whitelisted
+    contents = rotoscope_trace(whitelist: [INNER_FIXTURE_PATH, OUTER_FIXTURE_PATH]) do
       foo = FixtureOuter.new
       foo.do_work
     end
@@ -300,9 +300,9 @@ class RotoscopeTest < MiniTest::Test
     ], parse_and_normalize(contents))
   end
 
-  def test_trace_flatten_with_blacklisted_caller
+  def test_trace_flatten_with_whitelisted_caller
     foo = FixtureOuter.new
-    contents = rotoscope_trace(blacklist: ['/rotoscope_test.rb']) do
+    contents = rotoscope_trace(whitelist: ['/rotoscope_test.rb']) do
       foo.do_work
     end
 
@@ -386,8 +386,8 @@ class RotoscopeTest < MiniTest::Test
     ], parse_and_normalize(contents))
   end
 
-  def test_block_defined_methods_in_blacklist
-    contents = rotoscope_trace(blacklist: [MONADIFY_PATH]) { Example.apply("my value!") }
+  def test_block_defined_methods_in_whitelist
+    contents = rotoscope_trace(whitelist: [MONADIFY_PATH]) { Example.apply("my value!") }
 
     assert_equal([
       { entity: "Example", method_name: "apply", method_level: "class", filepath: "/rotoscope_test.rb", lineno: -1, caller_entity: "<UNKNOWN>", caller_method_name: __method__.to_s, caller_method_level: "instance" },
@@ -396,7 +396,7 @@ class RotoscopeTest < MiniTest::Test
   end
 
   def test_flatten_with_invoking_block_defined_methods
-    contents = rotoscope_trace(blacklist: [MONADIFY_PATH]) { Example.contents }
+    contents = rotoscope_trace(whitelist: [MONADIFY_PATH]) { Example.contents }
 
     assert_equal([
       { entity: "Example", method_name: "contents", method_level: "class", filepath: "/rotoscope_test.rb", lineno: -1, caller_entity: "<UNKNOWN>", caller_method_name: __method__.to_s, caller_method_level: "instance" },
@@ -508,8 +508,8 @@ class RotoscopeTest < MiniTest::Test
     end
   end
 
-  def rotoscope_trace(blacklist: [])
-    Rotoscope::CallLogger.trace(@logfile, blacklist: blacklist) { |rotoscope| yield rotoscope }
+  def rotoscope_trace(whitelist: [])
+    Rotoscope::CallLogger.trace(@logfile, whitelist: whitelist) { |rotoscope| yield rotoscope }
     File.read(@logfile)
   end
 

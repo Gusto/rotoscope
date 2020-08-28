@@ -53,8 +53,8 @@ IO,write,instance,example/dog.rb,11,IO,puts,instance
 ## API
 
 - [Public Class Methods](#public-class-methods)
-  - [`trace`](#rotoscopecallloggertracedest-blacklist-)
-  - [`new`](#rotoscopecallloggernewdest-blacklist-)
+  - [`trace`](#rotoscopecallloggertracedest-whitelist-)
+  - [`new`](#rotoscopecallloggernewdest-whitelist-)
 - [Public Instance Methods](#public-instance-methods)
   - [`trace`](#rotoscopecallloggertraceblock)
   - [`start_trace`](#rotoscopecallloggerstart_trace)
@@ -68,23 +68,23 @@ IO,write,instance,example/dog.rb,11,IO,puts,instance
 
 ### Public Class Methods
 
-#### `Rotoscope::CallLogger::trace(dest, blacklist: [])`
+#### `Rotoscope::CallLogger::trace(dest, whitelist: [])`
 
-Writes all calls of methods to `dest`, except for those whose filepath contains any entry in `blacklist`. `dest` is either a filename or an `IO`. Methods invoked at the top of the trace will have a caller entity of `<ROOT>` and a caller method name of `<UNKNOWN>`.
+Writes all calls of methods to `dest`, except for those whose filepath contains any entry in `whitelist`. `dest` is either a filename or an `IO`. Methods invoked at the top of the trace will have a caller entity of `<ROOT>` and a caller method name of `<UNKNOWN>`.
 
 ```ruby
 Rotoscope::CallLogger.trace(dest) { |rs| ... }
 # or...
-Rotoscope::CallLogger.trace(dest, blacklist: ["/.gem/"]) { |rs| ... }
+Rotoscope::CallLogger.trace(dest, whitelist: ["/.gem/"]) { |rs| ... }
 ```
 
-#### `Rotoscope::CallLogger::new(dest, blacklist: [])`
+#### `Rotoscope::CallLogger::new(dest, whitelist: [])`
 
 Same interface as `Rotoscope::CallLogger::trace`, but returns a `Rotoscope::CallLogger` instance, allowing fine-grain control via `Rotoscope::CallLogger#start_trace` and `Rotoscope::CallLogger#stop_trace`.
 ```ruby
 rs = Rotoscope::CallLogger.new(dest)
 # or...
-rs = Rotoscope::CallLogger.new(dest, blacklist: ["/.gem/"])
+rs = Rotoscope::CallLogger.new(dest, whitelist: ["/.gem/"])
 ```
 
 ---
